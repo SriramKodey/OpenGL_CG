@@ -1,0 +1,163 @@
+#include <iostream>
+#include <GL/glut.h>
+
+using namespace std;
+
+int cx = -13, cy = 0, cz = -45; 
+int r_ang = 0; 
+int rx = 0, ry = 0, rz = 0; 
+
+void theCube()
+{
+    glPushMatrix();
+    glColor3f(1, 1, 1);
+    //glTranslatef(cx, cy, cz);
+    glutSolidCube(0.4);
+    glPopMatrix();
+}
+
+void keyBoard(unsigned char key, int x, int y)
+{
+    if (key == 'w')     //forward
+    {
+        cz -= 1;
+    }
+    if (key == 's')     //back
+    {
+        cz += 1;
+    }
+    if (key == 'a')     //left
+    {
+        cx -= 1;
+    }
+    if (key == 'd')     //right
+    {
+        cx += 1;
+    }
+    if (key == 'q')     //up
+    {
+        cy += 1;
+    }
+    if (key == 'z')     //down
+    {
+        cy -= 1;
+    }
+    if (key == 'y')
+    {
+        ++ry;
+    }
+    if (key == 'h')
+    {
+        --ry;
+    }
+    if (key == 'u')
+    {
+        ++rz;
+    }
+    if (key == 'j')
+    {
+        --rz;
+    }
+    glutPostRedisplay();
+}
+
+void arrow(int key, int x, int y)
+{
+    if (key == GLUT_KEY_UP)
+    {
+        ++r_ang;
+        if (r_ang > 360)
+        {
+            r_ang = 0;
+        }
+    }
+    if (key == GLUT_KEY_DOWN)
+    {
+        --r_ang;
+        if (r_ang < 0)
+        {
+            r_ang = 360;
+        }
+        if (key == GLUT_KEY_LEFT)
+        {
+            --rx;
+        }
+        if (key == GLUT_KEY_RIGHT)
+        {
+            ++rx;
+        }
+    }
+    glutPostRedisplay();
+}
+
+void drawGrid()
+{
+    int i;
+    for (i = 0;i < 40;i++)
+    {
+        glPushMatrix();
+        if (i < 20)
+        {
+            glTranslatef(0, 0, i);
+        }
+        if (i >= 20)
+        {
+            glTranslatef(i - 20, 0, 0);
+            glRotatef(-90, 0, 1, 0);
+        }
+
+        glBegin(GL_LINES);
+        glColor3f(1, 1, 1);
+        glLineWidth(1);
+        glVertex3f(0, -0.1, 0);
+        glVertex3f(19, -0.1, 0);
+        glEnd();
+        glPopMatrix();
+    }
+}
+
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glTranslatef(cx, cy, cz);
+    glRotated(rx, ry, rz, r_ang);
+    
+    //expSquare();
+    drawGrid();
+    theCube();
+    glutSwapBuffers();
+}
+
+void Init()
+{    
+    //glColor3f(1.0, 1.0, 1.0);						// Set fill color to black 
+    glMatrixMode(GL_PROJECTION); 				//Initialize Projection Matrix
+    glLoadIdentity();
+    gluPerspective(35, 1.0f, 0.1f, 1000);
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.1, 0.1, 0.1, 1);				// Set clear color to white
+}
+
+int main(int argc, char** argv)
+{
+    // Initialise GLUT library 
+    glutInit(&argc, argv);
+    // Set the initial display mode 
+    glutInitDisplayMode(GLUT_DOUBLE);
+    // Set the initial window position and size 
+    //glutInitWindowPosition(0, 0);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("line");
+    // Initialize drawing colors 
+    Init();
+    // Call the displaying function 
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyBoard);
+    glutSpecialFunc(arrow);
+    // Keep displaying untill the program is closed 
+    glutMainLoop();
+    
+    return 0;
+}
