@@ -1,0 +1,456 @@
+#include <stdio.h>
+#include <GL/glut.h> 
+#include <GL/gl.h>
+#include <math.h>
+
+
+double eyex = 0, eyey = 0, eyez = 0;
+double cx = 0, cy = 1, cz = 0;
+double yr = 0, rad_yaw = 0;
+double pr = 0, rad_pitch = 0;
+double temp = 0;
+
+struct yaw_struct
+{
+    int angle = 0;
+    bool flag = true;
+
+}yaw;
+
+struct roll_struct
+{
+    int angle = 0;
+    bool flag = true;
+}pitch;
+
+void draw_circle(float x1, float y1, float radius, float level, float r, float g, float b)
+{
+    //wrt table, adjusting x and z coordinates
+    x1 = x1 - 1;
+    y1 = y1 - 1;
+    glColor4f(r, g, b, 1);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(x1, level, y1);
+    float x2, y2, angle;
+    for (angle = 1.0f;angle < 361.0f;angle += 0.2)
+    {
+        x2 = x1 + sin(angle) * radius;
+        y2 = y1 + cos(angle) * radius;
+        glVertex3f(x2, level, y2);
+    }
+    glEnd();
+}
+void draw_doughnuts()
+{
+    glColor4f(1, 1, 0, 1);
+    glutSolidTorus(0.02, 0.07, 20, 20);
+}
+void draw_cake()
+{
+    GLUquadricObj* p = gluNewQuadric();
+    glPushMatrix();
+    glColor3f(1, 1, 0);
+    gluCylinder(p, 0.26, 0.26, 0.2, 30, 30);
+    glPopMatrix();
+
+
+    // GLUquadricObj *q = gluNewQuadric();  
+    // glPushMatrix(); 
+    // glColor3f(0,1,0);
+    // glTranslatef(0,0.2,0);
+    // gluCylinder(q, 0.24, 0.24, 0.2, 30, 30); 
+    // glPopMatrix(); 
+
+    // GLUquadricObj *r = gluNewQuadric(); 
+    // glPushMatrix(); 
+    // glTranslatef(0,0.4,0);
+    // glColor3f(1,1,0);
+    // gluCylinder(r, 0.2, 0.2, 0.2, 30, 30); 
+    // glPopMatrix();  
+}
+void draw_laddoo()
+{
+    glColor4f(1, 1, 0, 1);
+    glutSolidSphere(0.05, 20, 20);
+}
+void draw_teapot()
+{
+    glColor4f(1, 0, 1, 1);
+    glutSolidTeapot(0.5);
+}
+void draw_leg(float xt, float yt, float zt)
+{
+    glPushMatrix();
+    glTranslatef(xt, yt, zt);
+    glScalef(0.1, 1, 0.1);
+    glutSolidCube(1.0);
+    glPopMatrix();
+}
+void draw_table()
+{
+    glColor4f(.5, .5, .5, 1);
+    glPushMatrix();
+    glScalef(2, 0.1, 2);
+    glutSolidCube(1.0);
+    glPopMatrix();
+    draw_leg(0.95, -0.5, -0.95);
+    draw_leg(0.95, -0.5, 0.95);
+    draw_leg(-0.95, -0.5, -0.95);
+    draw_leg(-0.95, -0.5, 0.95);
+}
+void draw_axes()
+{
+    glLineWidth(2.0);
+    glBegin(GL_LINES);
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(.15, 0, 0);
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, .15, 0);
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, .15);
+    glEnd();
+    glLineWidth(1.0);
+}
+void draw_wall()
+{
+    glColor4f(0, 0, 1, 1);
+    glPushMatrix();
+    glScalef(3, 0.01, 4);
+    glutSolidCube(1.0);
+    glPopMatrix();
+}
+
+void changeYaw_Pitch(int key, int x, int y)
+{
+    if (!yaw.flag)
+    {
+        yr = sqrt(pow(eyex - cx, 2) + pow(eyey - cy, 2));
+
+        temp = acos((cx - eyex)/yr);
+        if (temp < 0)
+        {
+            temp = 3.14 - temp;
+        }
+
+        yaw.angle = int(temp/0.0174533);
+
+        yaw.flag = true;
+
+        printf("First adjustment yaw = %d \n", yaw.angle);
+    }
+    if (key == GLUT_KEY_RIGHT)
+    {
+        ++yaw.angle;
+        printf("increase yaw \n");
+        if (yaw.angle > 360)
+        {
+            yaw.angle = 0;
+        }
+        rad_yaw = 0.0174533 * yaw.angle;
+        //compute r
+        yr = sqrt(pow(eyex - cx, 2) + pow(eyez - cz, 2));
+
+        cx = eyex + yr * cos(rad_yaw);
+        cz = eyez + yr * sin(rad_yaw);
+
+        printf("%d \n", yaw.angle);
+    }
+    else if (key == GLUT_KEY_LEFT)
+    {
+        --yaw.angle;
+        printf("decrease yaw \n");
+        if (yaw.angle < 0)
+        {
+            yaw.angle = 360;
+        }
+        rad_yaw = 0.0174533 * yaw.angle;
+        //compute r
+        yr = sqrt(pow(eyex - cx, 2) + pow(eyez - cz, 2));
+
+        cx = eyex + yr * cos(rad_yaw);
+        cz = eyez + yr * sin(rad_yaw);
+
+        printf("%d \n", yaw.angle);
+    }
+    else if (key == GLUT_KEY_UP)
+    {
+        ++pitch.angle;
+        printf("increase pitch \n");
+        if (pitch.angle > 360)
+        {
+            pitch.angle = 0;
+        }
+        rad_pitch = 0.0174533 * pitch.angle;
+        //compute r
+        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
+
+        cy = eyey + pr * cos(rad_pitch);
+        cz = eyez + pr * sin(rad_pitch);
+
+        printf("%d \n", pitch.angle);
+    }
+    else if (key == GLUT_KEY_DOWN)
+    {
+        --pitch.angle;
+        printf("decrease yaw \n");
+        if (pitch.angle < 0)
+        {
+            pitch.angle = 360;
+        }
+        rad_pitch = 0.0174533 * pitch.angle;
+        //compute r
+        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
+
+        cy = eyey + pr * cos(rad_pitch);
+        cz = eyez + pr * sin(rad_pitch);
+
+        printf("%d \n", pitch.angle);
+    }
+
+    glutPostRedisplay();
+}
+
+void Pan_Zoom(unsigned char key, int x, int y)
+{
+    if (key == 't')     //forward
+    {
+        cz -= .1;
+        eyez -= .1;
+        yaw.flag = false;
+    }
+    else if (key == 'g')     //back
+    {
+        cz += .1;
+        eyez += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'f')     //left
+    {
+        cx -= .1;
+        eyex -= .1;
+        yaw.flag = false;
+    }
+    else if (key == 'h')     //right
+    {
+        cx += .1;
+        eyex += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'r')     //up
+    {
+        cy += .1;
+        eyey += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'v')     //down
+    {
+        cy -= .1;
+        eyey -= .1;
+        yaw.flag = false;
+    }
+    else if (key == 'k') //zoom in
+    {
+
+    }
+    else if (key == 'm') // zoom out
+    {
+
+    }
+
+    glutPostRedisplay();
+}
+
+bool eyePosition(unsigned char key, int x, int y)
+{
+        if (key == 'w')     //forward
+        {
+            eyez -= .1;
+            yaw.flag = false;
+        }
+        else if (key == 's')     //back
+        {
+            eyez += .1;
+            yaw.flag = false;
+        }
+        else if (key == 'a')     //left
+        {
+            eyex -= .1;
+            yaw.flag = false;
+        }
+        else if (key == 'd')     //right
+        {
+            eyex += .1;
+            yaw.flag = false;
+        }
+        else if (key == 'q')     //up
+        {
+            eyey += .1;
+            yaw.flag = false;
+        }
+        else if (key == 'z')     //down
+        {
+            eyey -= .1;
+            yaw.flag = false;
+        }
+        else
+        {
+            return false;
+        }
+        glutPostRedisplay();
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+    if (!eyePosition(key, x, y))
+    {
+        Pan_Zoom(key, x, y);
+    }
+}
+
+void allObjects()
+{
+    //plates
+    draw_circle(0, 0.5, 0.3, 1.05, 0, 0, 0);//omlets
+    draw_circle(0, -0.5, 0.3, 1.05, 0, 0, 0);//doughnuts
+    draw_circle(0.7, 0, 0.3, 1.05, 0, 0, 0);//cake
+    draw_circle(-0.5, 0, 0.3, 1.05, 0, 0, 0);//laddoos
+    //omlets
+    draw_circle(0, 0.35, 0.12, 1.05, 1, 1, 1);
+    draw_circle(0, 0.35, 0.05, 1.05, 1, 1, 0);
+
+    draw_circle(0, 0.6, 0.12, 1.05, 1, 1, 1);
+    draw_circle(0, 0.6, 0.05, 1.05, 1, 1, 0);
+    //table 
+    glPushMatrix();
+    glTranslatef(-1, 1, -1);
+    draw_table();
+    //teapot on table
+    glPushMatrix();
+    glTranslatef(0, .15, 0);        // position a teapot at (0,0.2,0) relative to the table 
+    glScalef(.4, .4, .4);         // the size of the teapot is 0.4x0.4x0.4
+    draw_teapot();
+    glPopMatrix();
+    //laddoos on plate
+    glPushMatrix();
+    glTranslatef(-0.6, 0.1, -0.1);
+    draw_laddoo();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-0.3, 0.1, -0.1);
+    draw_laddoo();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-0.3, 0.1, 0.1);
+    draw_laddoo();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-0.6, 0.1, 0.1);
+    draw_laddoo();
+    glPopMatrix();
+
+    //doughnuts
+    glPushMatrix();
+    glTranslatef(-0.1, 0.1, -0.6);
+    glRotatef(-90, 1, 0, 0);
+    draw_doughnuts();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-0.1, 0.1, -0.3);
+    glRotatef(-90, 1, 0, 0);
+    draw_doughnuts();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.1, 0.1, -0.3);
+    glRotatef(-90, 1, 0, 0);
+    draw_doughnuts();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.1, 0.1, -0.6);
+    glRotatef(-90, 1, 0, 0);
+    draw_doughnuts();
+    glPopMatrix();
+
+    //cake
+    glPushMatrix();
+    glRotatef(-90, 1, 0, 0);
+    glTranslatef(0.7, 0.05, 0);
+    draw_cake();
+    glPopMatrix();
+    glPopMatrix();
+    //cake top
+    draw_circle(0.7, 0, 0.26, 1.24, 1, 1, 0);
+    draw_axes();
+
+    //walls
+    glPushMatrix();
+    glTranslatef(-2, 1.5, 0);
+    glRotatef(90, 0, 0, 1);
+    draw_wall();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 1.5, -2);
+    glRotatef(90, 1, 0, 0);
+    glRotatef(90, 0, 1, 0);
+    draw_wall();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(2, 1.5, 0);
+    glRotatef(90, 0, 0, 1);
+    draw_wall();
+    glPopMatrix();
+}
+
+void theCube()
+{
+    glPushMatrix();
+    glColor3f(1, 1, 1);
+    glTranslatef(cx, cy, cz);
+    glutSolidCube(0.4);
+    glPopMatrix();
+}
+
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear framebuffer
+    glLoadIdentity();
+    //position the camera 
+    gluLookAt(eyex, eyey, eyez, cx, cy, cz, 0, 1, 0);
+
+    theCube();
+    allObjects();
+
+    glutSwapBuffers();
+}
+
+void Init()
+{
+    glClearColor(0, 0, 0, 1);  // specify the background color 
+
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_DEPTH_TEST);
+    // set up the projection matrix 
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(60, 1, .1, 100);
+    //glOrtho(-3,3,-3,3,-3,3);
+    // set up the modelview matrix 
+    glMatrixMode(GL_MODELVIEW);
+}
+
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("scene");
+    Init();
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutSpecialFunc(changeYaw_Pitch);
+    glutMainLoop();
+}
