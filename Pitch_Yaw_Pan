@@ -8,20 +8,15 @@ double eyex = 0, eyey = 0, eyez = 0;
 double cx = 0, cy = 1, cz = 0;
 double yr = 0, rad_yaw = 0;
 double pr = 0, rad_pitch = 0;
+double rr = 0, rad_roll = 0;
 double temp = 0;
 
-struct yaw_struct
+struct yaw_pitch_roll
 {
     int angle = 0;
     bool flag = true;
 
-}yaw;
-
-struct roll_struct
-{
-    int angle = 0;
-    bool flag = true;
-}pitch;
+}yaw, pitch, roll;
 
 void draw_circle(float x1, float y1, float radius, float level, float r, float g, float b)
 {
@@ -123,19 +118,134 @@ void draw_wall()
     glPopMatrix();
 }
 
-void changeYaw_Pitch(int key, int x, int y)
+void changeRoll(int key, int x, int y)
+{
+    if (!roll.flag)
+    {
+        rr = sqrt(pow(eyex - cx, 2) + pow(eyey - cy, 2));
+
+        temp = acos((cy - eyey) / rr);
+        /*if (temp < 0)
+        {
+            temp = 3.14 - temp;
+        }*/
+
+        roll.angle = int(temp / 0.0174533);
+
+        roll.flag = true;
+
+        printf("First adjustment roll = %d \n", roll.angle);
+    }
+    else if (key == GLUT_KEY_END)
+    {
+        ++roll.angle;
+        printf("increase roll \n");
+        if (roll.angle > 360)
+        {
+            roll.angle = 0;
+        }
+        rad_roll = 0.0174533 * roll.angle;
+        //compute r
+        rr = sqrt(pow(eyex - cx, 2) + pow(eyey - cy, 2));
+
+        cx = eyex + rr * cos(rad_roll);
+        cy = eyey + rr * sin(rad_roll);
+
+        printf("%d \n", roll.angle);
+    }
+    else if (key == GLUT_KEY_HOME)
+    {
+        --roll.angle;
+        printf("decrease roll \n");
+        if (roll.angle < 0)
+        {
+            roll.angle = 360;
+        }
+        rad_roll = 0.0174533 * roll.angle;
+        //compute r
+        rr = sqrt(pow(eyex - cx, 2) + pow(eyey - cy, 2));
+
+        cx = eyex + rr * cos(rad_roll);
+        cy = eyey + rr * sin(rad_roll);
+
+        printf("%d \n", roll.angle);
+    }
+    glutPostRedisplay();
+}
+
+void changePitch(int key, int x, int y)
+{
+    if (!pitch.flag)
+    {
+        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
+
+        temp = acos((cy - eyey) / pr);
+        /*if (temp < 0)
+        {
+            temp = 3.14 - temp;
+        }*/
+
+        pitch.angle = int(temp / 0.0174533);
+
+        pitch.flag = true;
+
+        printf("First adjustment pitch = %d \n", pitch.angle);
+    }
+    else if (key == GLUT_KEY_UP)
+    {
+        ++pitch.angle;
+        printf("increase pitch \n");
+        if (pitch.angle > 360)
+        {
+            pitch.angle = 0;
+        }
+        rad_pitch = 0.0174533 * pitch.angle;
+        //compute r
+        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
+
+        cy = eyey + pr * cos(rad_pitch);
+        cz = eyez + pr * sin(rad_pitch);
+
+        printf("%d \n", pitch.angle);
+    }
+    else if (key == GLUT_KEY_DOWN)
+    {
+        --pitch.angle;
+        printf("decrease yaw \n");
+        if (pitch.angle < 0)
+        {
+            pitch.angle = 360;
+        }
+        rad_pitch = 0.0174533 * pitch.angle;
+        //compute r
+        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
+
+        cy = eyey + pr * cos(rad_pitch);
+        cz = eyez + pr * sin(rad_pitch);
+
+        printf("%d \n", pitch.angle);
+    }
+    else
+    {
+        changeRoll(key, x, y);
+        return;
+    }
+    glutPostRedisplay();
+}
+
+void changeYaw(int key, int x, int y)
 {
     if (!yaw.flag)
     {
         yr = sqrt(pow(eyex - cx, 2) + pow(eyey - cy, 2));
 
-        temp = acos((cx - eyex)/yr);
-        if (temp < 0)
+        temp = acos((cx - eyex) / yr);
+        /*if (temp < 0)
         {
             temp = 3.14 - temp;
-        }
+        }*/
 
-        yaw.angle = int(temp/0.0174533);
+        yaw.angle = int(temp / 0.0174533);
 
         yaw.flag = true;
 
@@ -175,39 +285,10 @@ void changeYaw_Pitch(int key, int x, int y)
 
         printf("%d \n", yaw.angle);
     }
-    else if (key == GLUT_KEY_UP)
+    else
     {
-        ++pitch.angle;
-        printf("increase pitch \n");
-        if (pitch.angle > 360)
-        {
-            pitch.angle = 0;
-        }
-        rad_pitch = 0.0174533 * pitch.angle;
-        //compute r
-        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
-
-        cy = eyey + pr * cos(rad_pitch);
-        cz = eyez + pr * sin(rad_pitch);
-
-        printf("%d \n", pitch.angle);
-    }
-    else if (key == GLUT_KEY_DOWN)
-    {
-        --pitch.angle;
-        printf("decrease yaw \n");
-        if (pitch.angle < 0)
-        {
-            pitch.angle = 360;
-        }
-        rad_pitch = 0.0174533 * pitch.angle;
-        //compute r
-        pr = sqrt(pow(eyey - cy, 2) + pow(eyez - cz, 2));
-
-        cy = eyey + pr * cos(rad_pitch);
-        cz = eyez + pr * sin(rad_pitch);
-
-        printf("%d \n", pitch.angle);
+        changePitch(key, x, y);
+        return;
     }
 
     glutPostRedisplay();
@@ -265,41 +346,41 @@ void Pan_Zoom(unsigned char key, int x, int y)
 
 bool eyePosition(unsigned char key, int x, int y)
 {
-        if (key == 'w')     //forward
-        {
-            eyez -= .1;
-            yaw.flag = false;
-        }
-        else if (key == 's')     //back
-        {
-            eyez += .1;
-            yaw.flag = false;
-        }
-        else if (key == 'a')     //left
-        {
-            eyex -= .1;
-            yaw.flag = false;
-        }
-        else if (key == 'd')     //right
-        {
-            eyex += .1;
-            yaw.flag = false;
-        }
-        else if (key == 'q')     //up
-        {
-            eyey += .1;
-            yaw.flag = false;
-        }
-        else if (key == 'z')     //down
-        {
-            eyey -= .1;
-            yaw.flag = false;
-        }
-        else
-        {
-            return false;
-        }
-        glutPostRedisplay();
+    if (key == 'w')     //forward
+    {
+        eyez -= .1;
+        yaw.flag = false;
+    }
+    else if (key == 's')     //back
+    {
+        eyez += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'a')     //left
+    {
+        eyex -= .1;
+        yaw.flag = false;
+    }
+    else if (key == 'd')     //right
+    {
+        eyex += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'q')     //up
+    {
+        eyey += .1;
+        yaw.flag = false;
+    }
+    else if (key == 'z')     //down
+    {
+        eyey -= .1;
+        yaw.flag = false;
+    }
+    else
+    {
+        return false;
+    }
+    glutPostRedisplay();
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -451,6 +532,6 @@ int main(int argc, char** argv)
     Init();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
-    glutSpecialFunc(changeYaw_Pitch);
+    glutSpecialFunc(changeYaw);
     glutMainLoop();
 }
