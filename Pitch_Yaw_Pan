@@ -1,8 +1,7 @@
+#include <iostream>
 #include <stdio.h>
 #include <GL/glut.h> 
 #include <GL/gl.h>
-#include <math.h>
-
 
 double eyex = 0, eyey = 0, eyez = 0;
 double cx = 0, cy = 1, cz = 0;
@@ -10,6 +9,14 @@ double yr = 0, rad_yaw = 0;
 double pr = 0, rad_pitch = 0;
 double rr = 0, rad_roll = 0;
 double temp = 0;
+
+struct zoom
+{
+    double t = 1;
+    bool flag = true;
+    double ex, ey, ez;
+    double cx, cy, cz;
+}zoom;
 
 struct yaw_pitch_roll
 {
@@ -294,51 +301,83 @@ void changeYaw(int key, int x, int y)
     glutPostRedisplay();
 }
 
-void Pan_Zoom(unsigned char key, int x, int y)
+void changeZoom(unsigned char key, int x, int y)
+{
+    if (!zoom.flag)
+    {
+        zoom.ex = eyex;
+        zoom.ey = eyey;
+        zoom.ez = eyez;
+        zoom.cx = cx;
+        zoom.cy = cy;
+        zoom.cz = cz;
+        zoom.t = 1;
+    }
+    if (key == 'k')
+    {
+        zoom.t += 0.1;
+        eyex = zoom.cx + (zoom.t) * (zoom.ex - zoom.cx);
+        eyey = zoom.cy + (zoom.t) * (zoom.ey - zoom.cy);
+        eyez = zoom.cz + (zoom.t) * (zoom.ez - zoom.cz);
+    }
+    else
+    {
+        zoom.t -= 0.1;
+        eyex = zoom.cx + (zoom.t) * (zoom.ex - zoom.cx);
+        eyey = zoom.cy + (zoom.t) * (zoom.ey - zoom.cy);
+        eyez = zoom.cz + (zoom.t) * (zoom.ez - zoom.cz);
+    }
+    glutPostRedisplay();
+}
+
+void Pan(unsigned char key, int x, int y)
 {
     if (key == 't')     //forward
     {
         cz -= .1;
         eyez -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'g')     //back
     {
         cz += .1;
         eyez += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'f')     //left
     {
         cx -= .1;
         eyex -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'h')     //right
     {
         cx += .1;
         eyex += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'r')     //up
     {
         cy += .1;
         eyey += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'v')     //down
     {
         cy -= .1;
         eyey -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
-    else if (key == 'k') //zoom in
+    else if (key == 'k' || key == 'm') //zoom in or out
     {
-
-    }
-    else if (key == 'm') // zoom out
-    {
-
+        changeZoom(key, x, y);
+        return;
     }
 
     glutPostRedisplay();
@@ -350,31 +389,37 @@ bool eyePosition(unsigned char key, int x, int y)
     {
         eyez -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 's')     //back
     {
         eyez += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'a')     //left
     {
         eyex -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'd')     //right
     {
         eyex += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'q')     //up
     {
         eyey += .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else if (key == 'z')     //down
     {
         eyey -= .1;
         yaw.flag = false;
+        zoom.flag = false;
     }
     else
     {
@@ -387,7 +432,7 @@ void keyboard(unsigned char key, int x, int y)
 {
     if (!eyePosition(key, x, y))
     {
-        Pan_Zoom(key, x, y);
+        Pan(key, x, y);
     }
 }
 
@@ -502,7 +547,7 @@ void display()
     //position the camera 
     gluLookAt(eyex, eyey, eyez, cx, cy, cz, 0, 1, 0);
 
-    theCube();
+    //theCube();
     allObjects();
 
     glutSwapBuffers();
